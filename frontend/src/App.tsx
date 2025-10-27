@@ -1,35 +1,62 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from "react";
+import "./App.css";
+import "./index.css";
+import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
+import Dashboard from "./pages/Dashboard";
+import Groups from "./pages/Groups";
+import GroupDetail from "./pages/GroupDetail";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
 
-function App() {
-  const [count, setCount] = useState(0)
+type Route = {
+  path: string;
+  component: React.FC;
+};
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+const routes: Route[] = [
+  { path: "/", component: Dashboard },
+  { path: "/dashboard", component: Dashboard },
+  { path: "/groups", component: Groups },
+  { path: "/groups/:id", component: GroupDetail },
+  { path: "/login", component: Login },
+  { path: "/signup", component: Signup },
+  { path: "/profile", component: Profile },
+];
+
+function matchRoute(hash: string): React.FC {
+  const path = hash.replace(/^#/, "") || "/";
+  // simple param handling for /groups/:id
+  if (path.startsWith("/groups/") && path.split("/").length === 3)
+    return GroupDetail;
+  const route = routes.find((r) => r.path === path);
+  return route ? route.component : NotFound;
 }
 
-export default App
+function App() {
+  const [hash, setHash] = React.useState(window.location.hash || "#/");
+
+  React.useEffect(() => {
+    const onHash = () => setHash(window.location.hash || "#/");
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const Page = matchRoute(hash);
+
+  return (
+    <div className="app-root">
+      <Header />
+      <div className="app-body">
+        <Sidebar />
+        <main className="app-main">
+          <Page />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default App;
