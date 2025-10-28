@@ -11,7 +11,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "../lib/api";
 import { Card } from "./Card";
-import { addMember } from "../lib/api";
+import { addMember, removeMemberFromGroup } from "../lib/api";
 import { AddMemberModal } from "./AddMemberModal";
 
 interface MemberListProps {
@@ -24,7 +24,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, groupId }) => {
   const queryClient = useQueryClient();
   const [isAddingMember, setIsAddingMember] = React.useState(false);
 
-  const mutation = useMutation({
+  const addMemberMutation = useMutation({
     mutationFn: (email: string) => addMember(groupId, email),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
@@ -38,6 +38,27 @@ export const MemberList: React.FC<MemberListProps> = ({ members, groupId }) => {
     onError: (error: Error) => {
       toast({
         title: "Failed to add member",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+      });
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (memberId: string) =>
+      removeMemberFromGroup({ groupId, memberId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+      toast({
+        title: "Member removed",
+        status: "success",
+        duration: 3000,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to remove member",
         description: error.message,
         status: "error",
         duration: 5000,
@@ -68,6 +89,15 @@ export const MemberList: React.FC<MemberListProps> = ({ members, groupId }) => {
                   {member.email}
                 </Text>
               </Box>
+              <Button
+                size="sm"
+                colorScheme="red"
+                variant="ghost"
+                onClick={() => removeMemberMutation.mutate(member.id)}
+                isLoading={removeMemberMutation.isPending}
+              >
+                Remove
+              </Button>
             </HStack>
           </Card>
         ))}
@@ -77,8 +107,8 @@ export const MemberList: React.FC<MemberListProps> = ({ members, groupId }) => {
       <AddMemberModal
         isOpen={isAddingMember}
         onClose={() => setIsAddingMember(false)}
-        onAdd={(email) => mutation.mutate(email)}
-        isAdding={mutation.isPending}
+        onAdd={(email) => addMemberMutation.mutate(email)}
+        isAdding={addMemberMutation.isPending}
       />
     </>
   );

@@ -12,15 +12,27 @@ import {
   Tabs,
   Text,
   VStack,
+  HStack,
   useToast,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getGroup,
   getMembers,
   getContributions,
   addContribution,
+  addMember,
+  leaveGroup,
+  deleteGroup,
+  getProfile,
   type Contribution,
+  type User,
 } from "../lib/api";
 import { Card } from "../components/Card";
 import { MemberList } from "../components/MemberList";
@@ -30,6 +42,14 @@ import { AddContributionModal } from "../components/AddContributionModal";
 const GroupDetail: React.FC = () => {
   const toast = useToast();
   const [isAddingContribution, setIsAddingContribution] = React.useState(false);
+  const [isLeavingGroup, setIsLeavingGroup] = React.useState(false);
+  const [isDeletingGroup, setIsDeletingGroup] = React.useState(false);
+
+  // Get current user profile
+  const { data: currentUser } = useQuery({
+    queryKey: ["profile"],
+    queryFn: getProfile,
+  });
 
   // Get group ID from URL hash
   const groupId = window.location.hash.split("/").pop() || "";
@@ -53,6 +73,8 @@ const GroupDetail: React.FC = () => {
       enabled: !!groupId,
     });
 
+  const queryClient = useQueryClient();
+
   const contributionMutation = useMutation({
     mutationFn: (data: { amount: number; date: string }) =>
       addContribution(groupId, data),
@@ -63,6 +85,9 @@ const GroupDetail: React.FC = () => {
         duration: 3000,
       });
       setIsAddingContribution(false);
+      queryClient.invalidateQueries({
+        queryKey: ["group-contributions", groupId],
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -71,6 +96,69 @@ const GroupDetail: React.FC = () => {
         status: "error",
         duration: 5000,
       });
+    },
+  });
+
+  const addMemberMutation = useMutation({
+    mutationFn: (email: string) => addMember(groupId, email),
+    onSuccess: (newMember: User) => {
+      toast({
+        title: "Member added",
+        description: `${newMember.name} has been added to the group`,
+        status: "success",
+        duration: 3000,
+      });
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to add member",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+      });
+    },
+  });
+
+  const leaveGroupMutation = useMutation({
+    mutationFn: () => leaveGroup(groupId),
+    onSuccess: () => {
+      toast({
+        title: "Left group",
+        status: "success",
+        duration: 3000,
+      });
+      window.location.hash = "#/groups";
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to leave group",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+      });
+      setIsLeavingGroup(false);
+    },
+  });
+
+  const deleteGroupMutation = useMutation({
+    mutationFn: () => deleteGroup(groupId),
+    onSuccess: () => {
+      toast({
+        title: "Group deleted",
+        status: "success",
+        duration: 3000,
+      });
+      window.location.hash = "#/groups";
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete group",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+      });
+      setIsDeletingGroup(false);
     },
   });
 
@@ -102,12 +190,33 @@ const GroupDetail: React.FC = () => {
               </Text>
             )}
           </Box>
-          <Button
-            colorScheme="brand"
-            onClick={() => setIsAddingContribution(true)}
-          >
-            Add Contribution
-          </Button>
+          <HStack>
+            <Button
+              colorScheme="brand"
+              onClick={() => setIsAddingContribution(true)}
+            >
+              Add Contribution
+            </Button>
+            {currentUser?.id === group.adminId ? (
+              <Button
+                colorScheme="red"
+                variant="outline"
+                onClick={() => setIsDeletingGroup(true)}
+                isLoading={deleteGroupMutation.isPending}
+              >
+                Delete Group
+              </Button>
+            ) : (
+              <Button
+                colorScheme="red"
+                variant="outline"
+                onClick={() => setIsLeavingGroup(true)}
+                isLoading={leaveGroupMutation.isPending}
+              >
+                Leave Group
+              </Button>
+            )}
+          </HStack>
         </Box>
 
         <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap={6}>
@@ -148,6 +257,8 @@ const GroupDetail: React.FC = () => {
               <ContributionList
                 contributions={contributions}
                 members={members}
+                groupId={groupId}
+                isAdmin={currentUser?.id === group.adminId}
               />
             </TabPanel>
             <TabPanel>
@@ -165,6 +276,72 @@ const GroupDetail: React.FC = () => {
         onAdd={(data) => contributionMutation.mutate(data)}
         isAdding={contributionMutation.isPending}
       />
+
+      {/* Leave Group Dialog */}
+      <AlertDialog
+        isOpen={isLeavingGroup}
+        leastDestructiveRef={React.useRef(null)}
+        onClose={() => setIsLeavingGroup(false)}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader>Leave Group?</AlertDialogHeader>
+            <AlertDialogBody>
+              Are you sure you want to leave this group? You will need to be
+              re-added by an admin to join again.
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button
+                ref={React.useRef(null)}
+                onClick={() => setIsLeavingGroup(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={() => leaveGroupMutation.mutate()}
+                isLoading={leaveGroupMutation.isPending}
+                ml={3}
+              >
+                Leave Group
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      {/* Delete Group Dialog */}
+      <AlertDialog
+        isOpen={isDeletingGroup}
+        leastDestructiveRef={React.useRef(null)}
+        onClose={() => setIsDeletingGroup(false)}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader>Delete Group?</AlertDialogHeader>
+            <AlertDialogBody>
+              Are you sure you want to delete this group? This action cannot be
+              undone and all group data will be permanently deleted.
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button
+                ref={React.useRef(null)}
+                onClick={() => setIsDeletingGroup(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={() => deleteGroupMutation.mutate()}
+                isLoading={deleteGroupMutation.isPending}
+                ml={3}
+              >
+                Delete Group
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Container>
   );
 };

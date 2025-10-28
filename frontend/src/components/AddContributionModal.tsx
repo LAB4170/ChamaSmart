@@ -20,7 +20,7 @@ import { contributionSchema, type ContributionInput } from "../lib/validations";
 interface AddContributionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (amount: number) => void;
+  onAdd: (data: { amount: number; date: string }) => void;
   isAdding: boolean;
 }
 
@@ -35,7 +35,7 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
   });
 
   const onSubmit = (data: ContributionInput) => {
-    onAdd(data.amount);
+    onAdd({ amount: data.amount, date: data.date });
   };
 
   return (
@@ -56,6 +56,14 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
                       {...methods.register("amount", { valueAsNumber: true })}
                     />
                   </NumberInput>
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Date</FormLabel>
+                  <input
+                    type="date"
+                    {...methods.register("date")}
+                    className="chakra-input"
+                  />
                 </FormControl>
                 <Button
                   type="submit"

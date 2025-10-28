@@ -1,11 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { ChakraProvider, extendTheme } from "@chakra-ui/react";
+import { ChakraProvider } from "@chakra-ui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
 import App from "./App.tsx";
 
-const theme = extendTheme({
+const theme = {
   colors: {
     brand: {
       50: "#e3f2fd",
@@ -19,7 +19,7 @@ const theme = extendTheme({
     body: "system-ui, sans-serif",
     heading: "system-ui, sans-serif",
   },
-});
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
