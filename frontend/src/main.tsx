@@ -4,22 +4,7 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
 import App from "./App.tsx";
-
-const theme = {
-  colors: {
-    brand: {
-      50: "#e3f2fd",
-      100: "#bbdefb",
-      500: "#2196f3",
-      600: "#1e88e5",
-      700: "#1976d2",
-    },
-  },
-  fonts: {
-    body: "system-ui, sans-serif",
-    heading: "system-ui, sans-serif",
-  },
-};
+import theme from "./theme";
 
 const queryClient = new QueryClient({
   defaultOptions: {

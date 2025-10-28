@@ -1,10 +1,22 @@
 import React from "react";
-import { api_login } from "../lib/mockApi";
+import {
+  Box,
+  Button,
+  Container,
+  Heading,
+  Text,
+  VStack,
+  useToast,
+} from "@chakra-ui/react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { login } from "../lib/api";
+import { loginSchema, type LoginInput } from "../lib/validations";
+import { Card } from "../components/Card";
+import { FormInput } from "../components/FormInput";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = React.useState("");
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState("");
   const toast = useToast();
   const methods = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -31,20 +43,7 @@ const Login: React.FC = () => {
     mutation.mutate(data);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setLoading(true);
-    try {
-      await api_login(email);
-      window.location.hash = "#/dashboard";
-      window.location.reload(); // Refresh to update header/sidebar state
-    } catch (err) {
-      setError("Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Removed handleSubmit since we're using react-hook-form's onSubmit
 
   return (
     <Container maxW="md" py={12}>

@@ -7,8 +7,10 @@ import {
   Badge,
   VStack,
   HStack,
+  Icon,
 } from "@chakra-ui/react";
-import { Card } from "./Card";
+import { FiUsers, FiArrowRight } from "react-icons/fi";
+import { GlassCard } from "./StyledComponents";
 import type { Group } from "../lib/api";
 
 interface GroupCardProps {
@@ -17,42 +19,54 @@ interface GroupCardProps {
 
 export const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
   return (
-    <Card>
+    <GlassCard
+      role="group"
+      transition="all 0.3s"
+      _hover={{
+        transform: "translateY(-5px) scale(1.02)",
+        boxShadow: "xl",
+      }}
+    >
       <VStack align="stretch" spacing={4}>
         <Box>
-          <Heading size="md" mb={2}>
+          <Heading size="md" mb={2} color="white">
             {group.name}
           </Heading>
           {group.description && (
-            <Text color="gray.600" noOfLines={2}>
+            <Text color="whiteAlpha.800" noOfLines={2}>
               {group.description}
             </Text>
           )}
         </Box>
 
-        <Box>
-          <Text fontSize="sm" color="gray.600">
+        <HStack spacing={3}>
+          <Icon as={FiUsers} color="white" />
+          <Text fontSize="sm" color="whiteAlpha.900">
             {group.members.length} members
           </Text>
-          {group.description && (
-            <Badge colorScheme={group.members.length > 0 ? "green" : "yellow"}>
-              {group.members.length > 0 ? "Active" : "New"}
-            </Badge>
-          )}
-        </Box>
-
-        <HStack spacing={2}>
-          <Button
-            colorScheme="brand"
+          <Badge
             variant="solid"
-            size="sm"
-            width="full"
-            onClick={() => (window.location.hash = `#/groups/${group.id}`)}
+            colorScheme={group.members.length > 0 ? "green" : "yellow"}
+            borderRadius="full"
+            px={3}
           >
-            View Details
-          </Button>
+            {group.members.length > 0 ? "Active" : "New"}
+          </Badge>
         </HStack>
+
+        <Button
+          variant="glass"
+          size="md"
+          width="full"
+          onClick={() => (window.location.hash = `#/groups/${group.id}`)}
+          rightIcon={<Icon as={FiArrowRight} />}
+          _groupHover={{
+            bg: "rgba(255, 255, 255, 0.2)",
+          }}
+        >
+          View Details
+        </Button>
       </VStack>
-    </Card>
+    </GlassCard>
   );
 };
