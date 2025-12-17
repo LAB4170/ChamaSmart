@@ -144,7 +144,7 @@ const getChamaContributions = async (req, res) => {
       paramCount++;
     }
 
-    query += " ORDER BY c.contribution_date DESC, c.created_at DESC";
+    query += " AND c.is_deleted = false ORDER BY c.contribution_date DESC, c.created_at DESC";
 
     const result = await pool.query(query, params);
 
@@ -233,10 +233,11 @@ const deleteContribution = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // Delete contribution
-    await client.query("DELETE FROM contributions WHERE contribution_id = $1", [
-      id,
-    ]);
+    // Soft delete contribution
+    await client.query(
+      "UPDATE contributions SET is_deleted = true, deleted_at = NOW() WHERE contribution_id = $1",
+      [id]
+    );
 
     // Update chama's current fund
     await client.query(
