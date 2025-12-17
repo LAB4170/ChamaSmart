@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
-const morgan = require("morgan");
+// const helmet = require("helmet");
+// const rateLimit = require("express-rate-limit");
+// const morgan = require("morgan");
 require("dotenv").config();
 require("./config/db"); // Initialize DB connection
 
@@ -10,29 +10,29 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security Middleware
-app.use(helmet());
+// app.use(helmet());
 
 // Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
-app.use(limiter);
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100, // Limit each IP to 100 requests per windowMs
+//   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+//   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+// });
+// app.use(limiter);
 
 // Auth Rate Limiting (Stricter)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 login/register requests per windowMs
-  message: "Too many login attempts from this IP, please try again after 15 minutes",
-});
-app.use("/api/auth", authLimiter);
+// const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 20, // Limit each IP to 20 login/register requests per windowMs
+//   message: "Too many login attempts from this IP, please try again after 15 minutes",
+// });
+// app.use("/api/auth", authLimiter);
 
 // Logging
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
+// if (process.env.NODE_ENV === "development") {
+//   app.use(morgan("dev"));
+// }
 
 // Middleware
 app.use(cors());
